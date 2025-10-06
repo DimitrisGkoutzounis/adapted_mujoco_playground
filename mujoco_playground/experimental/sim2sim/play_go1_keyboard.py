@@ -107,6 +107,10 @@ class OnnxController:
     return obs.astype(np.float32)
 
   def get_control(self, model: mujoco.MjModel, data: mujoco.MjData) -> None:
+      
+    print(data.qpos[0])  # Initial position of the robot
+    print(data.qpos[1])
+    print(data.qpos[2])
     self._counter += 1
     if self._counter % self._n_substeps == 0:
       obs = self.get_obs(model, data)
@@ -131,6 +135,10 @@ def load_callback(model=None, data=None):
   sim_dt = 0.004
   n_substeps = int(round(ctrl_dt / sim_dt))
   model.opt.timestep = sim_dt
+  
+  print(data.qpos[0])  # Initial position of the robot
+  print(data.qpos[1])
+  print(data.qpos[2])
 
   policy = OnnxController(
       policy_path=(_ONNX_DIR / "go1_policy.onnx").as_posix(),
@@ -141,6 +149,8 @@ def load_callback(model=None, data=None):
       vel_scale_y=0.8,
       vel_scale_rot=2 * np.pi,
   )
+
+
 
   mujoco.set_mjcb_control(policy.get_control)
 

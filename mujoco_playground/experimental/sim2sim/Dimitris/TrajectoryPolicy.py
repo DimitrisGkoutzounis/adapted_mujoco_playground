@@ -40,7 +40,9 @@ class TrajectoryPolicy:
         self.trajectory_generator = trajectory_generator
         self.target = None
         self.init_pos = None
-        self.current_pos = None
+                
+        self.current_pos = np.zeros(2)
+        self.current_vel = np.zeros(2)
 
         self.last_update_time = time.time()  # initialize properly
         self.cmd_vel_x = 0.0
@@ -72,38 +74,57 @@ class TrajectoryPolicy:
     def trajectory_controller(self, model, data):
         '''guides the robot to follow a trajectory'''
         #set the control loop
+        self._update_current_state(data)
+
+        # Check if a target exists, if not, create one
+        if self.target is None:
+            print("Setting initial target.")
+            self.set_target()
+
+        # Check if the robot has reached the target
+        error_pos_norm = np.linalg.norm(self.current_pos - self.target)
+        if error_pos_norm < 0.2:  # Increased threshold for smoother transitions
+            print(f"Target reached. Current position: {self.current_pos}")
+            self.set_target()
+        
+        # Compute the desired velocity command using the PD controller
+        self.cmd_vel_x, self.cmd_vel_y = self.compute_pd_velocity()
+        
+        # Send the computed velocity to the low-level locomotion policy
+        self.locomotion_policy.set_cmd_vel(self.cmd_vel_x, self.cmd_vel_y)
+        
+        # Finally, execute the low-level control step
         if self.locomotion_policy:
             self.locomotion_policy.get_control(model, data)
-        
-        current_time = time.time()
-        #retrun x,y,yaw list
-        self.set_current_pos(data)
-        
-        #compute the error from the target
-        
-        if(self.target is None):
-            """Set initial target"""
-            self.set_target()
-        
-        error_pos = np.linalg.norm(self.current_pos - self.target)
-        if error_pos < 0.5:
-            # Generate new trajectory
-            self.set_target()
-        
-        else:
-            # Compute the desired velocity
-            self.cmd_vel_x, self.cmd_vel_y = self.compute_velocity(data)
-            print("Target:", self.target)
-            self.update_trajectory_control()
             
-            
+    def compute_pd_velocity(self):
+        """PD controller to compute velocity command towards the target."""
+        
+        # Controller gains - you can tune these
+        Kp = 2.5  
+        Kd = 0.3  
+
+       
+        pos_error = self.target - self.current_pos
+        p_term = Kp * pos_error
+
+       
+        d_term = Kd * self.current_vel
+      
+        vel_cmd = p_term - d_term
+
+        # Clip the final command to be within a reasonable range (e.g., [-1, 1])
+        vel_cmd = np.clip(vel_cmd, -1.0, 1.0)
+        
+        return vel_cmd[0], vel_cmd[1]
+                
             
     def compute_velocity(self,data):
         """Simple PD controller to compute velocity command towards the target."""
 
         # Get current position and velocity from locomotion policy
         
-        Kp = 1.0
+        Kp = 10.0
         Kd = 0.2
 
         # Position error
@@ -129,13 +150,19 @@ class TrajectoryPolicy:
         
     def set_target(self):
         # Set the target for the locomotion policy
-        self.target = np.array(self.trajectory_generator._generate_simple_target())
+        # In the set_target method...
+        self.target = np.array(self.trajectory_generator._generate_simple_target()).flatten()
         
-    def set_current_pos(self,data):
-        # Set the current position for the locomotion policy
-        self.current_pos = np.array(self.locomotion_policy.current_pos(data))
-        xy_cords = self.current_pos[:2]
-        self.current_pos = xy_cords
+    def _update_current_state(self, data):
+        """Fetches the robot's current position and velocity."""
+        
+        # Get position (assuming the method returns [x, y, z] or similar)
+        full_pos = self.locomotion_policy.current_pos(data)
+        self.current_pos = np.array(full_pos[:2])
+
+       
+        full_vel = self.locomotion_policy.current_vel(data)
+        self.current_vel = np.array(full_vel[:2])
 
     def get_velocity(self):
         return self.cmd_vel_x, self.cmd_vel_y

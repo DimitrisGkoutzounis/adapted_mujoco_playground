@@ -53,6 +53,16 @@ class LocomotionPolicy:
     self.cmd_x = x
     self.cmd_y = y
     
+    
+  def current_vel(self, data: mujoco.MjData) -> np.ndarray:
+    """
+    Get the current linear velocity of the robot's base in the world frame.
+    """
+    # data.qvel contains the generalized velocities. For a free joint,
+    # the first 3 elements are the linear velocities (vx, vy, vz).
+    linear_velocity = data.qvel[:3]
+    return linear_velocity.copy()
+    
   def current_pos(self, data):
     """Get the current position of the robot."""
     self.curr_x = data.qpos[0]
@@ -72,7 +82,7 @@ class LocomotionPolicy:
     joint_velocities = data.qvel[6:]
     
     cmd_vels = np.array([self.cmd_x, self.cmd_y, self.cmd_yaw])
-    print(f"cmd_vels: {cmd_vels}")
+    # print(f"cmd_vels: {cmd_vels}")
     
     
     obs = np.hstack([

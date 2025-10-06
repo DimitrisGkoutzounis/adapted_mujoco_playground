@@ -92,6 +92,8 @@ class TrajectoryGenerator:
         target_y = np.random.uniform(-5, 5)
         
         target_coords = [(target_x, target_y)]
+        
+        print("New Target", target_coords)
         return target_coords
         
         

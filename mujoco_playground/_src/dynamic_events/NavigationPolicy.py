@@ -11,7 +11,7 @@ import numpy as np
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Robot  import RobotGo2
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Arm  import Arm
 from mujoco_playground._src.dynamic_events.arm_mujoco.src.Perception import Perception
-from mujoco_playground._src.dynamic_events.arm_mujoco.src.ConfigurationGenerator_jax import ConfigGenerator
+from mujoco_playground._src.dynamic_events.arm_mujoco.src.ConfigurationGenerator import ConfigGenerator
 
 from mujoco_playground._src.dynamic_events.Locomotion_Controller import Locomotion_Controller
 from mujoco_playground._src.dynamic_events.Navigator import Navigator
@@ -84,7 +84,7 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         # t_last_cmd: float = 0.0,
         # ctrl_dt: float = 0.02, # This affect the Locomotion COntroller, was 0.01
         # sim_dt : float = 0.002, # model.opt.timestep
-        # n_substeps : int = 5,
+        n_substeps : int = 5,
         
          
         _ONNX_DIR : epath.Path = epath.Path(__file__).parent.parent.parent / "experimental/sim2sim"/ "onnx", # Modified this (_HERE.parent.parent), two folders back before access .onnx
