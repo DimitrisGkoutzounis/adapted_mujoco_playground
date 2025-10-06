@@ -150,7 +150,7 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         
         self.Navigator_ = Navigator()
         
-        print("NavigationPolicy: Initialized")
+        print("NavigationPolicy(with Gen jax): Initialized")
 
     def get_action(self, model, data) -> np.ndarray:
         """Returns zero action (does nothing)."""
@@ -241,6 +241,8 @@ class NavigationPolicy(go2_base.Go2NavEnv):
         
         # Apply new configuration to Go2, and set the go2 to the mujoco
         self.robot_go2.set_CoM_pos(self.mujoco_data, config=new_go2_config)
+        
+       
         
         input("Wait here")
 
